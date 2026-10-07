@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Receso — Cuenta regresiva para recesos</title>
+  <meta name="description" content="Cuenta regresiva para los recesos de tu conferencia, controlada desde el celular. Se conecta con ProPresenter, Resolume, FreeShow y OBS. Gratis, sin instalación y sin internet.">
+  <meta name="theme-color" content="#0b0b10">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Receso — Cuenta regresiva para recesos">
+  <meta property="og:description" content="Proyectá cuánto falta para volver y controlalo desde el celular. Se conecta con ProPresenter y Resolume.">
+  <meta property="og:image" content="https://samuelsuarezok.github.io/PANEL-DE-CONTROL-RECESOS-/img/proyeccion.jpg">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱️</text></svg>">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg: #0b0b10;
+      --surface: #13131a;
+      --surface-2: #1a1a23;
+      --border: #272733;
+      --text: #ececf1;
+      --muted: #a3a3b5;
+      --primary: #2563eb;
+      --primary-hover: #3b82f6;
+      --accent: #93c5fd;
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      color-scheme: dark;
+    }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--accent); }
+    img { max-width: 100%; height: auto; display: block; }
+    .wrap { width: min(1120px, 100% - 32px); margin: 0 auto; }
+
+    /* ----- Navegación ----- */
+    .nav { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; }
+    .brand { display: flex; align-items: center; gap: 8px; font-weight: 750; font-size: 1.15rem; color: var(--text); text-decoration: none; }
+    .nav-links { display: flex; gap: 20px; flex-wrap: wrap; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.95rem; }
+    .nav-links a:hover { color: var(--text); }
+    @media (max-width: 640px) { .nav-links { display: none; } }
+
+    /* ----- Portada ----- */
+    .hero {
+      background: radial-gradient(ellipse at 70% -10%, rgba(79, 70, 229, 0.35), transparent 60%),
+                  radial-gradient(ellipse at 0% 30%, rgba(37, 99, 235, 0.18), transparent 50%);
+      padding-bottom: 72px;
+    }
+    .hero-grid { display: grid; gap: 40px; align-items: center; padding-top: 36px; }
+    @media (min-width: 940px) { .hero-grid { grid-template-columns: 1fr 1.15fr; padding-top: 56px; } }
+    .eyebrow { display: inline-block; padding: 4px 12px; border: 1px solid var(--border); border-radius: 999px; color: var(--muted); font-size: 0.85rem; background: rgba(255, 255, 255, 0.03); }
+    h1 { font-size: clamp(2.2rem, 5.5vw, 3.6rem); line-height: 1.05; letter-spacing: -0.03em; margin: 16px 0; }
+    .lead { font-size: 1.15rem; color: var(--muted); margin: 0 0 28px; max-width: 34em; }
+    .screen { border-radius: 16px; overflow: hidden; border: 1px solid #2c2c3a; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), 0 0 0 8px rgba(255, 255, 255, 0.03); }
+
+    /* ----- Descargas ----- */
+    .downloads { display: grid; gap: 10px; max-width: 460px; }
+    .dl {
+      display: flex; align-items: center; gap: 14px; padding: 14px 18px;
+      border-radius: 14px; border: 1px solid var(--border); background: var(--surface);
+      color: var(--text); text-decoration: none; transition: border-color 0.15s, background 0.15s, transform 0.1s;
+    }
+    .dl:hover { border-color: #3d3d52; background: var(--surface-2); }
+    .dl:active { transform: scale(0.99); }
+    .dl.primary { background: linear-gradient(135deg, #2563eb, #4f46e5); border-color: transparent; }
+    .dl.primary:hover { background: linear-gradient(135deg, #3b82f6, #6366f1); }
+    .dl-icon { font-size: 1.6rem; width: 34px; text-align: center; flex: none; }
+    .dl strong { display: block; font-size: 1.02rem; }
+    .dl small { display: block; color: var(--muted); font-size: 0.82rem; }
+    .dl.primary small { color: rgba(255, 255, 255, 0.82); }
+    .dl .arrow { margin-left: auto; opacity: 0.7; }
+    .meta { margin-top: 14px; color: var(--muted); font-size: 0.88rem; }
+    .meta span + span::before { content: " · "; }
+    details.which { margin-top: 10px; color: var(--muted); font-size: 0.88rem; max-width: 460px; }
+    details.which summary { cursor: pointer; color: var(--accent); }
+
+    /* ----- Secciones ----- */
+    section { padding: 72px 0; border-top: 1px solid var(--border); }
+    h2 { font-size: clamp(1.6rem, 3.5vw, 2.2rem); letter-spacing: -0.02em; line-height: 1.15; margin: 0 0 12px; }
+    .section-lead { color: var(--muted); margin: 0 0 36px; max-width: 42em; font-size: 1.05rem; }
+
+    .steps { display: grid; gap: 16px; counter-reset: step; }
+    @media (min-width: 800px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+    .step { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
+    .step::before {
+      counter-increment: step; content: counter(step);
+      display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(59, 130, 246, 0.16); color: var(--accent); font-weight: 750; margin-bottom: 12px;
+    }
+    .step h3 { margin: 0 0 6px; font-size: 1.1rem; }
+    .step p { margin: 0; color: var(--muted); }
+
+    .notice { margin-top: 24px; display: grid; gap: 12px; }
+    @media (min-width: 800px) { .notice { grid-template-columns: repeat(3, 1fr); } }
+    .note { border: 1px solid rgba(251, 191, 36, 0.3); background: rgba(251, 191, 36, 0.06); border-radius: 14px; padding: 16px 18px; font-size: 0.93rem; }
+    .note strong { color: var(--warn); display: block; margin-bottom: 4px; }
+    .note p { margin: 0; color: #e7dfc8; }
+    code { font: 0.85em ui-monospace, "SF Mono", Menlo, Consolas, monospace; background: var(--surface-2); padding: 1px 6px; border-radius: 6px; }
+
+    .split { display: grid; gap: 40px; align-items: center; }
+    @media (min-width: 900px) { .split { grid-template-columns: 1.2fr 0.8fr; } }
+    .features { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+    @media (min-width: 600px) { .features { grid-template-columns: 1fr 1fr; } }
+    .features li { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px 18px; }
+    .features strong { display: block; margin-bottom: 2px; }
+    .features span { color: var(--muted); font-size: 0.93rem; }
+    .phone { max-width: 300px; margin: 0 auto; border-radius: 28px; overflow: hidden; border: 1px solid #2c2c3a; box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55), 0 0 0 8px #15151d; }
+
+    .cards { display: grid; gap: 16px; }
+    @media (min-width: 760px) { .cards { grid-template-columns: 1fr 1fr; } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; }
+    .card h3 { margin: 0 0 6px; font-size: 1.15rem; display: flex; align-items: center; gap: 8px; }
+    .card p { margin: 0 0 10px; color: var(--muted); }
+    .card ul { margin: 0; padding-left: 20px; color: var(--muted); font-size: 0.93rem; }
+    .card .tag { margin-left: auto; font-size: 0.75rem; font-weight: 650; color: var(--ok); background: rgba(74, 222, 128, 0.12); padding: 2px 10px; border-radius: 999px; }
+    .wide { margin: 28px 0 0; }
+    .wide .screen { max-width: 860px; margin: 0 auto; }
+    .wide figcaption { color: var(--muted); font-size: 0.88rem; margin-top: 10px; text-align: center; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    th { color: var(--muted); font-weight: 600; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--surface); }
+
+    footer { border-top: 1px solid var(--border); padding: 40px 0 56px; color: var(--muted); font-size: 0.92rem; }
+    .footer-links { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-bottom: 14px; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
+  </style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <nav class="nav" aria-label="Principal">
+      <a class="brand" href="#"><span aria-hidden="true">⏱️</span> Receso</a>
+      <div class="nav-links">
+        <a href="#empezar">Cómo empezar</a>
+        <a href="#funciones">Funciones</a>
+        <a href="#integraciones">Integraciones</a>
+        <a href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-#readme">Manual</a>
+      </div>
+    </nav>
+
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">Para equipos técnicos de conferencias e iglesias</span>
+        <h1>La cuenta regresiva para tus recesos</h1>
+        <p class="lead">Proyectá cuánto falta para volver, controlalo desde el celular y sincronizalo con ProPresenter y Resolume. Gratis, sin instalación y sin necesidad de internet.</p>
+
+        <div class="downloads" id="descargar">
+          <a class="dl" data-os="win" href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases/latest/download/Receso-Windows.zip">
+            <span class="dl-icon" aria-hidden="true">🪟</span>
+            <span><strong>Descargar para Windows</strong><small>Windows 10 y 11 (64 bits) · <span data-size="Receso-Windows.zip">ZIP</span></small></span>
+            <span class="arrow" aria-hidden="true">↓</span>
+          </a>
+          <a class="dl" data-os="mac" href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases/latest/download/Receso-Mac-AppleSilicon.zip">
+            <span class="dl-icon" aria-hidden="true">💻</span>
+            <span><strong>Descargar para Mac (Apple M1, M2, M3, M4)</strong><small>macOS 12 o superior · <span data-size="Receso-Mac-AppleSilicon.zip">ZIP</span></small></span>
+            <span class="arrow" aria-hidden="true">↓</span>
+          </a>
+          <a class="dl" data-os="mac" href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases/latest/download/Receso-Mac-Intel.zip">
+            <span class="dl-icon" aria-hidden="true">💻</span>
+            <span><strong>Descargar para Mac (Intel)</strong><small>Mac anteriores a 2021 · <span data-size="Receso-Mac-Intel.zip">ZIP</span></small></span>
+            <span class="arrow" aria-hidden="true">↓</span>
+          </a>
+        </div>
+        <details class="which">
+          <summary>¿Qué Mac tengo?</summary>
+          Menú Apple → <strong>Acerca de esta Mac</strong>. Si dice <strong>Chip: Apple M…</strong>, bajá la versión Apple. Si dice <strong>Procesador: Intel</strong>, la versión Intel.
+        </details>
+        <p class="meta"><span id="version">Última versión</span><span>Un solo archivo, sin instalar nada</span><span><a href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases">Todas las versiones</a></span></p>
+      </div>
+
+      <div class="screen">
+        <img src="img/proyeccion.jpg" width="1600" height="900" alt="Proyección de Receso: el título «Receso», la cuenta regresiva en grande, «Café en el foyer» y un anuncio abajo">
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section id="empezar">
+    <div class="wrap">
+      <h2>Cómo empezar</h2>
+      <p class="section-lead">No hay que instalar nada. El programa corre en una PC del lugar y todos los equipos se conectan a esa PC por la red WiFi o por cable.</p>
+      <div class="steps">
+        <div class="step">
+          <h3>Descargá y descomprimí</h3>
+          <p>Dejá la carpeta <strong>Receso</strong> en el escritorio o en un pendrive. No lo abras desde adentro del ZIP: los datos se guardan al lado del programa.</p>
+        </div>
+        <div class="step">
+          <h3>Abrilo con doble clic</h3>
+          <p>Aparece una ventana con las direcciones y un <strong>código QR</strong>. Escanealo con el celular, conectado a la misma red, y se abre el panel de control.</p>
+        </div>
+        <div class="step">
+          <h3>Proyectá</h3>
+          <p>En la PC del proyector abrí la dirección, tocá <strong>Proyección</strong> y apretá <strong>F</strong> para pantalla completa. Listo: manejás todo desde el celular.</p>
+        </div>
+      </div>
+
+      <div class="notice">
+        <div class="note">
+          <strong>Windows: «Windows protegió su PC»</strong>
+          <p>Es normal en programas nuevos. Tocá <em>Más información</em> → <em>Ejecutar de todas formas</em>. Si el Firewall pregunta, permití <em>Redes privadas</em>.</p>
+        </div>
+        <div class="note">
+          <strong>Mac: «no se puede verificar al desarrollador»</strong>
+          <p>Abrí <em>Configuración del Sistema → Privacidad y seguridad</em> y tocá <em>Abrir igualmente</em>. Alternativa en Terminal: <code>xattr -d com.apple.quarantine receso-mac-*</code></p>
+        </div>
+        <div class="note">
+          <strong>¿El celular no conecta?</strong>
+          <p>Tiene que estar en la misma red que la PC. Algunas redes de hoteles aíslan los equipos: usá un router propio o el hotspot del celular.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="funciones">
+    <div class="wrap split">
+      <div>
+        <h2>Todo el receso, desde el celular</h2>
+        <p class="section-lead">Panel pensado para operar en vivo: botones grandes, el tiempo siempre a la vista y nada de menús escondidos.</p>
+        <ul class="features">
+          <li><strong>⏯️ Iniciar, pausar y ajustar</strong><span>±1 y ±5 minutos al instante. Reiniciar pide doble toque para evitar accidentes.</span></li>
+          <li><strong>💾 Plantillas</strong><span>«Almuerzo 60 min», «Café 20 min», «Culto 19:00»: un toque y queda armada.</span></li>
+          <li><strong>⏰ Duración u hora fija</strong><span>Contá 20 minutos o hasta las 19:00 exactas.</span></li>
+          <li><strong>🚦 Alertas de color</strong><span>Amarillo y rojo cuando queda poco. Al llegar a cero, tu mensaje: «Estamos por comenzar».</span></li>
+          <li><strong>🎨 Tu identidad</strong><span>Fondos de color, degradados o imagen, logo y anuncios que rotan.</span></li>
+          <li><strong>🛟 A prueba de cortes</strong><span>Si se cae la red, las pantallas siguen contando y se reconectan solas.</span></li>
+        </ul>
+      </div>
+      <div class="phone">
+        <img src="img/panel-celular.jpg" width="780" height="1688" alt="Panel de control en el celular: cuenta en curso, botones Pausar y Reiniciar, ajustes de minutos y plantillas" loading="lazy">
+      </div>
+    </div>
+  </section>
+
+  <section id="integraciones">
+    <div class="wrap">
+      <h2>Se conecta con lo que ya usás</h2>
+      <p class="section-lead">Opcional: la cuenta de Receso puede manejar los otros programas del equipo técnico. Se configura desde el panel con un botón de «Probar conexión».</p>
+      <div class="cards">
+        <div class="card">
+          <h3>⛪ ProPresenter <span class="tag">7.9 o superior</span></h3>
+          <p>Mantiene un timer de ProPresenter sincronizado al segundo: inicio, pausa, ajustes y reinicio. Puede mostrar un mensaje con la cuenta y ocultarlo al terminar.</p>
+          <ul><li>Activá <em>Preferencias → Red</em> en ProPresenter.</li></ul>
+        </div>
+        <div class="card">
+          <h3>🎛️ Resolume <span class="tag">Arena / Avenue</span></h3>
+          <p>Escribe la cuenta directamente en un <strong>Text Block</strong> de Resolume, sin OBS. El estilo lo manejás en Resolume. Puede disparar el clip al iniciar.</p>
+          <ul><li>Resolume 7: REST (Webserver). Resolume 6 y 7: OSC.</li></ul>
+        </div>
+        <div class="card">
+          <h3>📺 OBS → NDI / Spout</h3>
+          <p>Salida con fondo transparente real y contorno negro, lista para usar como capa encima de tus visuales en Resolume.</p>
+          <ul><li>Fuente de navegador + filtro «Dedicated NDI output».</li></ul>
+        </div>
+        <div class="card">
+          <h3>🎭 FreeShow</h3>
+          <p>Arranca, pausa y detiene timers de FreeShow y muestra overlays según la plantilla del receso.</p>
+          <ul><li>API REST de FreeShow (puerto 5506).</li></ul>
+        </div>
+      </div>
+
+      <figure class="wide">
+        <div class="screen">
+          <img src="img/salida-obs.jpg" width="1600" height="900" alt="Salida para OBS: el texto y la cuenta con contorno negro sobre fondo transparente (cuadriculado)" loading="lazy">
+        </div>
+        <figcaption>Salida para OBS/NDI: el cuadriculado representa la transparencia. En Resolume se ve solo el texto, encima de los visuales.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section id="requisitos">
+    <div class="wrap">
+      <h2>Requisitos</h2>
+      <p class="section-lead">Una PC para correr Receso. El resto de los equipos (celulares, proyector, OBS) solo necesitan un navegador en la misma red.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Equipo</th><th>Qué necesita</th></tr></thead>
+          <tbody>
+            <tr><td>PC que corre Receso</td><td>Windows 10/11 (64 bits) o macOS 12 o superior. No requiere instalación ni internet.</td></tr>
+            <tr><td>Celular o tablet del operador</td><td>Cualquier navegador moderno (Chrome, Safari) conectado a la misma red.</td></tr>
+            <tr><td>PC del proyector o LED</td><td>Un navegador en pantalla completa. Puede ser la misma PC que corre Receso.</td></tr>
+            <tr><td>ProPresenter / Resolume / FreeShow</td><td>Opcional. En la misma PC o en la misma red, con su API o red habilitada.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="footer-links">
+      <a href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-#readme">📖 Manual completo</a>
+      <a href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases">📦 Todas las versiones</a>
+      <a href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/blob/main/CHANGELOG.md">📝 Novedades</a>
+      <a href="https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-">💻 Código fuente</a>
+    </div>
+    <p>Receso — cuenta regresiva para recesos y entradas. Funciona 100 % en tu red local: ningún dato sale a internet.</p>
+  </div>
+</footer>
+
+<script>
+  // Resaltar la descarga que corresponde al sistema del visitante
+  (function () {
+    var ua = navigator.userAgent || "";
+    var os = /Windows/i.test(ua) ? "win" : /Macintosh|Mac OS X/i.test(ua) ? "mac" : "";
+    var links = document.querySelectorAll(".dl");
+    var first = null;
+    links.forEach(function (a) { if (os && a.dataset.os === os && !first) first = a; });
+    (first || links[0]).classList.add("primary");
+    if (first && first !== links[0]) first.parentNode.insertBefore(first, links[0]);
+  })();
+
+  // Versión y tamaños desde la última publicación en GitHub (si no responde, queda el texto por defecto)
+  fetch("https://api.github.com/repos/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases/latest")
+    .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+    .then(function (rel) {
+      var date = new Date(rel.published_at).toLocaleDateString("es", { day: "numeric", month: "long", year: "numeric" });
+      document.getElementById("version").textContent = "Versión " + rel.tag_name + " · " + date;
+      (rel.assets || []).forEach(function (asset) {
+        var el = document.querySelector('[data-size="' + asset.name + '"]');
+        if (el) el.textContent = "ZIP de " + Math.round(asset.size / 1048576) + " MB";
+      });
+    })
+    .catch(function () {});
+</script>
+</body>
+</html>

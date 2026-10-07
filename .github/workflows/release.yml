@@ -1,0 +1,76 @@
+# Compila Receso y publica los ejecutables en GitHub Releases.
+# Se dispara al subir una etiqueta de versión:  git tag v1.2.0 && git push origin v1.2.0
+# (o a mano desde la pestaña Actions, que solo deja los ZIP como artefactos para probar).
+
+name: Publicar versión
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Compilar y publicar
+    # macOS: hace falta codesign para que los ejecutables de Mac queden con firma válida
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.4.2
+
+      - name: Instalar dependencias
+        run: bun install --frozen-lockfile
+
+      - name: Verificar tipos
+        run: bun run embed && bun run typecheck
+
+      - name: Compilar ejecutables (Windows, Mac Apple Silicon, Mac Intel)
+        run: bun run build
+
+      - name: Empaquetar ZIP por sistema
+        run: |
+          set -euo pipefail
+          mkdir -p release
+          pack() {
+            stage="stage/${1%.zip}"
+            mkdir -p "$stage/Receso"
+            cp "dist/$2" "$stage/Receso/"
+            cp .github/LEEME.txt "$stage/Receso/LEEME.txt"
+            (cd "$stage" && zip -9 -r -q "$GITHUB_WORKSPACE/release/$1" Receso)
+          }
+          pack Receso-Windows.zip receso.exe
+          pack Receso-Mac-AppleSilicon.zip receso-mac-arm64
+          pack Receso-Mac-Intel.zip receso-mac-x64
+          ls -lh release
+
+      - name: Notas de la versión (desde CHANGELOG.md)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          awk -v tag="## ${GITHUB_REF_NAME}" 'index($0, tag) == 1 { found = 1; next } found && /^## / { exit } found { print }' CHANGELOG.md > release/notas.md
+          if [ ! -s release/notas.md ]; then echo "Receso ${GITHUB_REF_NAME}" > release/notas.md; fi
+          printf '\n---\n**Descargas y manual:** https://samuelsuarezok.github.io/PANEL-DE-CONTROL-RECESOS-/\n' >> release/notas.md
+          cat release/notas.md
+
+      - name: Publicar en Releases
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" release/*.zip \
+            --verify-tag \
+            --title "Receso ${GITHUB_REF_NAME}" \
+            --notes-file release/notas.md
+
+      - name: Guardar ZIP como artefacto (ejecución manual)
+        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: receso-zips
+          path: release/*.zip

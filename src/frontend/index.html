@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b10">
+  <script>
+    // Antes de pintar: las salidas transparentes no deben mostrar ni un cuadro de fondo oscuro en OBS
+    (function () {
+      var q = new URLSearchParams(location.search), p = location.pathname;
+      var t = (p === "/salida" || q.get("view") === "output") ? q.get("fondo") !== "1" : q.get("transparente") === "1" || q.get("transparent") === "1";
+      if (t) document.documentElement.className += " is-transparent";
+    })();
+  </script>
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>Receso — Cuenta regresiva</title>
+  <link rel="stylesheet" href="/styles.css?v=__BUILD_ID__">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⏱️</text></svg>">
+</head>
+<body>
+
+  <!-- ===================== INICIO ===================== -->
+  <main id="view-home" class="view home" hidden>
+    <div class="home-card">
+      <div class="home-logo" aria-hidden="true">⏱️</div>
+      <h1>Receso</h1>
+      <p class="home-sub">Cuenta regresiva para recesos y entradas</p>
+      <nav class="home-links">
+        <a class="home-btn primary" href="/?view=control">
+          <span class="home-btn-icon">🎛️</span>
+          <span><strong>Panel de control</strong><small>Para el operador (celular, tablet o PC)</small></span>
+        </a>
+        <a class="home-btn" href="/?view=projection">
+          <span class="home-btn-icon">🖥️</span>
+          <span><strong>Proyección</strong><small>Pantalla completa para proyector o LED</small></span>
+        </a>
+        <a class="home-btn" href="/salida">
+          <span class="home-btn-icon">📺</span>
+          <span><strong>Salida OBS / NDI</strong><small>Fondo transparente para Resolume</small></span>
+        </a>
+        <a class="home-btn" href="/conectar">
+          <span class="home-btn-icon">📱</span>
+          <span><strong>Conectar otro dispositivo</strong><small>Código QR y direcciones</small></span>
+        </a>
+      </nav>
+    </div>
+  </main>
+
+  <!-- ============ ESCENARIO (proyección y salida OBS) ============ -->
+  <main id="view-stage" class="view stage" hidden>
+    <div class="stage-frame" id="stage-frame">
+      <div class="stage-bg" id="stage-bg" aria-hidden="true"></div>
+      <div class="stage-content">
+        <h1 class="stage-top" id="stage-top"></h1>
+        <div class="stage-time" id="stage-time" role="timer" aria-atomic="true">--:--</div>
+        <p class="stage-bottom" id="stage-bottom"></p>
+        <img class="stage-logo" id="stage-logo" alt="" hidden>
+      </div>
+      <div class="stage-announcement" id="stage-announcement" aria-live="polite" hidden></div>
+    </div>
+  </main>
+
+  <!-- ===================== PANEL DE CONTROL ===================== -->
+  <main id="view-control" class="view control" hidden>
+    <header class="topbar">
+      <div class="brand"><span aria-hidden="true">⏱️</span> <strong>Receso</strong> <span class="brand-sub">Panel de control</span></div>
+      <div class="topbar-status">
+        <span class="pill" id="presence-pill" title="Pantallas conectadas a este servidor">🖥️ 0 · 📺 0</span>
+        <span class="pill" id="connection-pill"><span class="dot"></span><span class="pill-label">Conectando…</span></span>
+      </div>
+    </header>
+
+    <!-- Barra compacta que aparece al desplazarse -->
+    <div class="mini-bar" id="mini-bar" hidden>
+      <span class="mini-time" id="mini-time" data-alert="none">--:--</span>
+      <span class="mini-phase" id="mini-phase">Detenido</span>
+      <button type="button" class="btn btn-primary btn-sm" id="mini-toggle">▶ Iniciar</button>
+    </div>
+
+    <div class="control-layout">
+      <div class="col col-a">
+
+        <!-- EN VIVO -->
+        <section class="card live-card" id="live-card" style="--order: 1">
+          <div class="live-head">
+            <span class="phase-badge" id="phase-badge" data-phase="stopped">Detenido</span>
+            <span class="live-meta" id="live-meta"></span>
+          </div>
+          <div class="live-time" id="live-time" data-alert="none">--:--</div>
+          <div class="live-progress" aria-hidden="true"><div class="live-progress-bar" id="live-progress-bar"></div></div>
+          <div class="transport">
+            <button type="button" class="btn btn-primary btn-xl" id="btn-toggle">▶ Iniciar</button>
+            <button type="button" class="btn btn-secondary btn-xl" id="btn-reset">↺ Reiniciar</button>
+          </div>
+          <div class="adjust" role="group" aria-label="Ajustar tiempo">
+            <button type="button" class="btn btn-secondary" data-adjust="-5" aria-label="Restar 5 minutos">−5</button>
+            <button type="button" class="btn btn-secondary" data-adjust="-1" aria-label="Restar 1 minuto">−1</button>
+            <span class="adjust-label">min</span>
+            <button type="button" class="btn btn-secondary" data-adjust="1" aria-label="Sumar 1 minuto">+1</button>
+            <button type="button" class="btn btn-secondary" data-adjust="5" aria-label="Sumar 5 minutos">+5</button>
+          </div>
+        </section>
+
+        <!-- PLANTILLAS -->
+        <section class="card" style="--order: 2">
+          <h2>💾 Plantillas</h2>
+          <div id="templates-list" class="templates-list"></div>
+          <button type="button" class="btn btn-secondary btn-full" id="btn-save-template">+ Guardar la configuración actual como plantilla</button>
+        </section>
+
+        <!-- TIEMPO -->
+        <section class="card" style="--order: 3">
+          <h2>⏱️ Tiempo</h2>
+          <div class="segmented" role="radiogroup" aria-label="Modo de cuenta">
+            <label><input type="radio" name="mode" value="duration" id="mode-duration"><span>Duración<small>Ej: 15 min desde que inicia</small></span></label>
+            <label><input type="radio" name="mode" value="until" id="mode-until"><span>Hasta hora<small>Ej: hasta las 16:30</small></span></label>
+          </div>
+
+          <div id="duration-inputs" class="field">
+            <label for="input-duration">Duración (minutos)</label>
+            <div class="inline">
+              <input type="number" id="input-duration" min="0" max="1440" step="1" inputmode="numeric" value="15">
+              <span class="hint-inline">se aplica al salir del campo o con Enter</span>
+            </div>
+            <div class="chips" id="duration-chips">
+              <button type="button" class="chip" data-minutes="5">5</button>
+              <button type="button" class="chip" data-minutes="10">10</button>
+              <button type="button" class="chip" data-minutes="15">15</button>
+              <button type="button" class="chip" data-minutes="20">20</button>
+              <button type="button" class="chip" data-minutes="30">30</button>
+              <button type="button" class="chip" data-minutes="45">45</button>
+              <button type="button" class="chip" data-minutes="60">60</button>
+              <button type="button" class="chip" data-minutes="90">90</button>
+            </div>
+          </div>
+
+          <div id="until-inputs" class="field" hidden>
+            <label for="input-until">Hora objetivo</label>
+            <input type="time" id="input-until" value="16:30">
+            <p class="hint">Si la hora ya pasó hace más de 12 h se toma la de mañana.</p>
+          </div>
+        </section>
+
+        <!-- VISTA PREVIA Y SALIDAS -->
+        <section class="card" style="--order: 20">
+          <h2>👁️ Vista previa y salidas</h2>
+          <div class="preview">
+            <iframe id="preview-frame" title="Vista previa de la proyección" loading="lazy"></iframe>
+          </div>
+
+          <div class="field">
+            <label for="output-host">Dirección para otros equipos</label>
+            <select id="output-host"></select>
+            <p class="hint">Usá la IP de red si OBS, Resolume o el proyector están en otra PC.</p>
+          </div>
+
+          <div class="link-row">
+            <div class="link-info"><strong>🖥️ Proyección</strong><small>Pantalla completa: tecla F o doble clic</small></div>
+            <input type="text" readonly id="url-projection" aria-label="URL de proyección">
+            <button type="button" class="btn btn-secondary btn-icon" data-copy="url-projection" title="Copiar">📋</button>
+            <a class="btn btn-secondary btn-icon" id="open-projection" target="_blank" rel="noopener" title="Abrir">↗</a>
+          </div>
+
+          <div class="link-row">
+            <div class="link-info"><strong>📺 Salida OBS / NDI</strong><small>Fuente de navegador con fondo transparente</small></div>
+            <input type="text" readonly id="url-output" aria-label="URL de salida">
+            <button type="button" class="btn btn-secondary btn-icon" data-copy="url-output" title="Copiar">📋</button>
+            <a class="btn btn-secondary btn-icon" id="open-output" target="_blank" rel="noopener" title="Abrir">↗</a>
+          </div>
+          <div class="input-row three">
+            <div class="field">
+              <label for="output-width">Ancho</label>
+              <input type="number" id="output-width" min="320" max="7680" step="1" value="1920">
+            </div>
+            <div class="field">
+              <label for="output-height">Alto</label>
+              <input type="number" id="output-height" min="180" max="4320" step="1" value="1080">
+            </div>
+            <div class="field">
+              <label for="output-style">Estilo</label>
+              <select id="output-style">
+                <option value="outline">Transparente + contorno</option>
+                <option value="flat">Transparente plano</option>
+                <option value="background">Con fondo</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="link-row">
+            <div class="link-info"><strong>🎛️ Panel para otro celular</strong><small>O abrí <a href="/conectar" target="_blank">/conectar</a> para ver el QR</small></div>
+            <input type="text" readonly id="url-control" aria-label="URL del panel de control">
+            <button type="button" class="btn btn-secondary btn-icon" data-copy="url-control" title="Copiar">📋</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="col col-b">
+        <!-- TEXTOS -->
+        <section class="card" style="--order: 4">
+          <h2>📝 Textos</h2>
+          <div class="field">
+            <label for="input-text-top">Texto superior</label>
+            <input type="text" id="input-text-top" placeholder="Volvemos en" maxlength="120">
+          </div>
+          <div class="field">
+            <label for="input-text-bottom">Texto inferior</label>
+            <input type="text" id="input-text-bottom" placeholder="Próxima sesión" maxlength="200">
+          </div>
+          <div class="field">
+            <label for="input-message-zero">Mensaje al llegar a cero</label>
+            <input type="text" id="input-message-zero" placeholder="Vacío = queda 00:00" maxlength="120">
+          </div>
+        </section>
+
+        <!-- APARIENCIA -->
+        <details class="card" style="--order: 5">
+          <summary><h2>🎨 Apariencia</h2></summary>
+          <div class="field">
+            <span class="label">Fondo</span>
+            <div class="segmented three" role="radiogroup" aria-label="Tipo de fondo">
+              <label><input type="radio" name="bg-type" value="color" id="bg-color"><span>🎨 Color</span></label>
+              <label><input type="radio" name="bg-type" value="gradient" id="bg-gradient"><span>🌈 Degradado</span></label>
+              <label><input type="radio" name="bg-type" value="image" id="bg-image"><span>🖼️ Imagen</span></label>
+            </div>
+          </div>
+
+          <div id="bg-color-inputs" class="field">
+            <label for="input-bg-color">Color</label>
+            <input type="color" id="input-bg-color" value="#0a0a0f">
+          </div>
+
+          <div id="bg-gradient-inputs" class="field" hidden>
+            <label>Degradados sugeridos</label>
+            <div class="swatches" id="gradient-presets"></div>
+            <label for="input-bg-gradient">CSS personalizado</label>
+            <input type="text" id="input-bg-gradient" placeholder="linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)" spellcheck="false">
+          </div>
+
+          <div id="bg-image-inputs" class="field" hidden>
+            <label for="input-bg-image">Subir imagen de fondo</label>
+            <input type="file" id="input-bg-image" accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/svg+xml">
+            <div id="bg-image-preview" class="upload-preview" hidden></div>
+          </div>
+
+          <div class="field">
+            <label for="input-logo">Logo de la conferencia</label>
+            <input type="file" id="input-logo" accept="image/png,image/jpeg,image/gif,image/webp,image/avif,image/svg+xml">
+            <div id="logo-preview" class="upload-preview" hidden></div>
+          </div>
+
+          <div class="field">
+            <label for="input-bg-animation">Animación de fondo</label>
+            <select id="input-bg-animation">
+              <option value="none">Ninguna</option>
+              <option value="slow-zoom">Zoom lento</option>
+              <option value="subtle-shift">Desplazamiento sutil</option>
+            </select>
+          </div>
+        </details>
+
+        <!-- ANUNCIOS -->
+        <details class="card" style="--order: 6">
+          <summary><h2>📢 Anuncios rotativos</h2></summary>
+          <p class="hint">Se muestran abajo en la proyección mientras corre el receso. Cada anuncio aparece cada «intervalo» y queda visible su «duración».</p>
+          <div id="announcements-list" class="list"></div>
+          <div class="field">
+            <label for="input-announcement">Nuevo anuncio</label>
+            <input type="text" id="input-announcement" placeholder="Ej: WiFi: Conferencia_Guest / bendicion2024" maxlength="300">
+          </div>
+          <div class="input-row">
+            <div class="field">
+              <label for="input-announcement-duration">Visible (segundos)</label>
+              <input type="number" id="input-announcement-duration" min="1" max="600" value="10">
+            </div>
+            <div class="field">
+              <label for="input-announcement-interval">Intervalo (segundos)</label>
+              <input type="number" id="input-announcement-interval" min="3" max="3600" value="15">
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-full" id="btn-add-announcement">+ Agregar anuncio</button>
+        </details>
+
+        <!-- ALERTAS -->
+        <details class="card" style="--order: 7">
+          <summary><h2>⚠️ Alertas de color</h2></summary>
+          <p class="hint">El tiempo cambia de color cuando queda poco. Usá 0 para desactivar.</p>
+          <div class="input-row">
+            <div class="field">
+              <label for="input-alert-yellow">Amarillo desde (min)</label>
+              <input type="number" id="input-alert-yellow" min="0" max="120" step="0.5" value="5">
+            </div>
+            <div class="field">
+              <label for="input-alert-red">Rojo desde (min)</label>
+              <input type="number" id="input-alert-red" min="0" max="120" step="0.5" value="1">
+            </div>
+          </div>
+        </details>
+
+        <!-- PROPRESENTER -->
+        <details class="card integration" id="int-propresenter" style="--order: 8">
+          <summary><h2>⛪ ProPresenter</h2><span class="pill status-pill" data-status-for="propresenter"><span class="dot"></span><span class="pill-label">Deshabilitado</span></span></summary>
+          <p class="hint">Sincroniza un timer de ProPresenter 7.9+ con esta cuenta (duración, inicio, pausa y reinicio) y puede mostrar un mensaje. Activá <strong>Preferencias → Red → Habilitar red</strong> en ProPresenter y copiá el puerto que aparece ahí.</p>
+          <p class="status-line" data-status-line-for="propresenter" hidden></p>
+          <label class="check"><input type="checkbox" data-int="propresenter" data-key="enabled"> Habilitar ProPresenter</label>
+          <div class="input-row">
+            <div class="field">
+              <label for="pp-host">Host / IP</label>
+              <input type="text" id="pp-host" data-int="propresenter" data-key="host" placeholder="localhost" spellcheck="false" autocapitalize="off">
+            </div>
+            <div class="field">
+              <label for="pp-port">Puerto</label>
+              <input type="number" id="pp-port" data-int="propresenter" data-key="port" min="1" max="65535" placeholder="50001">
+            </div>
+          </div>
+          <button type="button" class="btn btn-secondary btn-full" data-test="propresenter">🔍 Probar conexión y cargar timers</button>
+          <div class="test-result" data-result-for="propresenter" hidden></div>
+          <div class="field">
+            <label for="pp-timer">Timer a sincronizar</label>
+            <input type="text" id="pp-timer" data-int="propresenter" data-key="timer" list="pp-timers" placeholder="Nombre exacto del timer (ej: Receso)" spellcheck="false">
+            <datalist id="pp-timers"></datalist>
+            <p class="hint">Receso le pone la duración y lo arranca alineado al segundo. Usalo en pantallas de escenario o en una diapositiva.</p>
+          </div>
+          <div class="field">
+            <label for="pp-message">Mensaje a mostrar al iniciar (opcional)</label>
+            <input type="text" id="pp-message" data-int="propresenter" data-key="message" list="pp-messages" placeholder="Nombre del mensaje (puede incluir el timer)" spellcheck="false">
+            <datalist id="pp-messages"></datalist>
+          </div>
+          <label class="check"><input type="checkbox" data-int="propresenter" data-key="clearMessageOnEnd"> Ocultar el mensaje al llegar a cero o al reiniciar</label>
+        </details>
+
+        <!-- RESOLUME -->
+        <details class="card integration" id="int-resolume" style="--order: 9">
+          <summary><h2>🎛️ Resolume</h2><span class="pill status-pill" data-status-for="resolume"><span class="dot"></span><span class="pill-label">Deshabilitado</span></span></summary>
+          <p class="hint">Escribe la cuenta regresiva directamente en una fuente <strong>Text Block</strong> (o Text Animator) de un clip de Resolume, sin OBS. El estilo del texto lo manejás en Resolume.</p>
+          <p class="status-line" data-status-line-for="resolume" hidden></p>
+          <label class="check"><input type="checkbox" data-int="resolume" data-key="enabled"> Habilitar Resolume</label>
+          <div class="segmented" role="radiogroup" aria-label="Protocolo">
+            <label><input type="radio" name="res-protocol" value="rest" data-int="resolume" data-key="protocol"><span>REST<small>Arena/Avenue 7 · Webserver</small></span></label>
+            <label><input type="radio" name="res-protocol" value="osc" data-int="resolume" data-key="protocol"><span>OSC<small>Arena 6 y 7 · OSC Input</small></span></label>
+          </div>
+          <div class="input-row">
+            <div class="field">
+              <label for="res-host">Host / IP</label>
+              <input type="text" id="res-host" data-int="resolume" data-key="host" placeholder="localhost" spellcheck="false" autocapitalize="off">
+            </div>
+            <div class="field" data-show-protocol="rest">
+              <label for="res-rest-port">Puerto Webserver</label>
+              <input type="number" id="res-rest-port" data-int="resolume" data-key="restPort" min="1" max="65535" placeholder="8080">
+            </div>
+            <div class="field" data-show-protocol="osc" hidden>
+              <label for="res-osc-port">Puerto OSC</label>
+              <input type="number" id="res-osc-port" data-int="resolume" data-key="oscPort" min="1" max="65535" placeholder="7000">
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="field">
+              <label for="res-layer">Capa</label>
+              <input type="number" id="res-layer" data-int="resolume" data-key="layer" min="1" max="999">
+            </div>
+            <div class="field">
+              <label for="res-clip">Clip (columna)</label>
+              <input type="number" id="res-clip" data-int="resolume" data-key="clip" min="1" max="999">
+            </div>
+          </div>
+          <div class="field">
+            <label for="res-format">Texto a enviar</label>
+            <input type="text" id="res-format" data-int="resolume" data-key="textFormat" placeholder="{tiempo}" spellcheck="false">
+            <p class="hint">Variables: <code>{tiempo}</code> <code>{arriba}</code> <code>{abajo}</code> · <code>\n</code> = salto de línea.</p>
+          </div>
+          <div data-show-protocol="osc" hidden>
+            <div class="field">
+              <label for="res-osc-source">Fuente de texto</label>
+              <select id="res-osc-source" data-int="resolume" data-key="oscSource">
+                <option value="textblock">Text Block (Arena 7)</option>
+                <option value="textanimator">Text Animator (Arena 6 y 7)</option>
+                <option value="custom">Dirección OSC personalizada</option>
+              </select>
+            </div>
+            <div class="field" id="res-osc-custom" hidden>
+              <label for="res-osc-address">Dirección OSC</label>
+              <input type="text" id="res-osc-address" data-int="resolume" data-key="oscAddress" placeholder="/composition/layers/1/clips/1/video/source/blocktextgenerator/text/params/lines" spellcheck="false" autocapitalize="off">
+              <p class="hint">En Resolume: modo OSC (Shortcuts → Edit OSC) y clic en el campo de texto para ver su dirección.</p>
+            </div>
+          </div>
+          <label class="check"><input type="checkbox" data-int="resolume" data-key="connectOnStart"> Disparar el clip al iniciar el receso</label>
+          <label class="check"><input type="checkbox" data-int="resolume" data-key="clearOnReset"> Limpiar la capa al reiniciar</label>
+          <button type="button" class="btn btn-secondary btn-full" data-test="resolume">🔍 Probar conexión</button>
+          <div class="test-result" data-result-for="resolume" hidden></div>
+        </details>
+
+        <!-- FREESHOW -->
+        <details class="card integration" id="int-freeshow" style="--order: 10">
+          <summary><h2>🎭 FreeShow</h2><span class="pill status-pill" data-status-for="freeshow"><span class="dot"></span><span class="pill-label">Deshabilitado</span></span></summary>
+          <p class="hint">Arranca timers y overlays de FreeShow por nombre. Activá la API en FreeShow (Configuración → Conexiones); el puerto REST es <strong>5506</strong>.</p>
+          <p class="status-line" data-status-line-for="freeshow" hidden></p>
+          <label class="check"><input type="checkbox" data-int="freeshow" data-key="enabled"> Habilitar FreeShow</label>
+          <div class="input-row">
+            <div class="field">
+              <label for="fs-host">Host / IP</label>
+              <input type="text" id="fs-host" data-int="freeshow" data-key="host" placeholder="localhost" spellcheck="false" autocapitalize="off">
+            </div>
+            <div class="field">
+              <label for="fs-port">Puerto REST</label>
+              <input type="number" id="fs-port" data-int="freeshow" data-key="port" min="1" max="65535" placeholder="5506">
+            </div>
+          </div>
+          <div class="field">
+            <label for="fs-token">Token (opcional)</label>
+            <input type="password" id="fs-token" data-int="freeshow" data-key="token" placeholder="Solo si configuraste uno en FreeShow" autocomplete="off">
+          </div>
+          <button type="button" class="btn btn-secondary btn-full" data-test="freeshow">🔍 Probar conexión</button>
+          <div class="test-result" data-result-for="freeshow" hidden></div>
+
+          <h3>Timer y overlay por plantilla</h3>
+          <div class="field">
+            <label for="fs-template">Plantilla</label>
+            <select id="fs-template"></select>
+          </div>
+          <div class="field">
+            <label for="fs-timer-name">Timer de FreeShow</label>
+            <input type="text" id="fs-timer-name" list="fs-timers" placeholder="Nombre exacto (ej: Receso 20 min)" maxlength="100">
+            <datalist id="fs-timers"></datalist>
+          </div>
+          <div class="field">
+            <label for="fs-overlay-name">Overlay de FreeShow (opcional)</label>
+            <input type="text" id="fs-overlay-name" placeholder="Nombre exacto (ej: Timer Receso)" maxlength="100">
+          </div>
+          <label class="check"><input type="checkbox" id="fs-clear-on-end"> Limpiar overlays al terminar o reiniciar</label>
+          <button type="button" class="btn btn-primary btn-full" id="btn-fs-save-template">💾 Guardar para esta plantilla</button>
+        </details>
+
+        <!-- ARCHIVOS -->
+        <details class="card" style="--order: 21">
+          <summary><h2>📁 Archivos subidos</h2></summary>
+          <div id="uploads-list" class="list"></div>
+        </details>
+      </div>
+    </div>
+
+    <!-- Modal para nombre de plantilla -->
+    <dialog id="template-modal" class="modal">
+      <form id="template-form" method="dialog">
+        <h3>Guardar plantilla</h3>
+        <label for="template-name">Nombre</label>
+        <input type="text" id="template-name" required maxlength="60" placeholder="Ej: Almuerzo 60 min">
+        <p class="hint">Guarda modo, tiempo y textos. Si el nombre ya existe, se reemplaza.</p>
+        <div class="modal-actions">
+          <button type="submit" value="save" class="btn btn-primary">Guardar</button>
+          <button type="submit" value="cancel" class="btn btn-secondary" formnovalidate>Cancelar</button>
+        </div>
+      </form>
+    </dialog>
+
+    <div class="toasts" id="toasts" aria-live="polite"></div>
+  </main>
+
+  <noscript><p style="padding:2rem;color:#fff">Receso necesita JavaScript habilitado.</p></noscript>
+  <script type="module" src="/app.js?v=__BUILD_ID__"></script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+{
+  "port": 3004,
+  "templates": [
+    {
+      "name": "Almuerzo 60 min",
+      "mode": "duration",
+      "durationMs": 3600000,
+      "textTop": "Almuerzo",
+      "textBottom": "Volvemos a las 14:00"
+    },
+    {
+      "name": "Café 20 min",
+      "mode": "duration",
+      "durationMs": 1200000,
+      "textTop": "Receso",
+      "textBottom": "Café en el foyer"
+    },
+    {
+      "name": "Culto 19:00",
+      "mode": "until",
+      "targetTime": "19:00",
+      "textTop": "Próximo culto",
+      "textBottom": "Santuario principal"
+    }
+  ],
+  "alertThresholds": {
+    "yellow": 300000,
+    "red": 60000
+  },
+  "freeshow": {
+    "enabled": false,
+    "host": "localhost",
+    "port": 5506,
+    "token": ""
+  },
+  "propresenter": {
+    "enabled": false,
+    "host": "localhost",
+    "port": 50001,
+    "timer": "",
+    "message": "",
+    "clearMessageOnEnd": true
+  },
+  "resolume": {
+    "enabled": false,
+    "protocol": "rest",
+    "host": "localhost",
+    "restPort": 8080,
+    "oscPort": 7000,
+    "layer": 1,
+    "clip": 1,
+    "textFormat": "{tiempo}",
+    "oscSource": "textblock",
+    "oscAddress": "",
+    "connectOnStart": false,
+    "clearOnReset": false
+  }
+}

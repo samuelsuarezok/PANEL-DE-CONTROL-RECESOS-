@@ -1,0 +1,29 @@
+RECESO - Cuenta regresiva para recesos y entradas
+==================================================
+
+CÓMO EMPEZAR
+1. Dejá esta carpeta en el escritorio o en un pendrive (NO ejecutes el programa
+   desde adentro del ZIP: los datos se perderían).
+2. Abrí el programa con doble clic:
+     Windows ........ receso.exe
+     Mac M1/M2/M3/M4  receso-mac-arm64
+     Mac Intel ...... receso-mac-x64
+3. Se abre una ventana con las direcciones y un código QR.
+   Escanealo con el celular (misma red WiFi): abre el Panel de control.
+4. En la PC del proyector abrí la dirección, tocá "Proyección" y apretá F
+   para pantalla completa.
+
+LA PRIMERA VEZ
+- Windows puede decir "Windows protegió su PC": tocá "Más información" y
+  después "Ejecutar de todas formas". Si el Firewall pregunta, permití
+  "Redes privadas".
+- Mac puede decir que no puede verificar al desarrollador: abrí
+  Configuración del Sistema > Privacidad y seguridad > "Abrir igualmente".
+  (O en Terminal, dentro de esta carpeta: xattr -d com.apple.quarantine receso-mac-*)
+
+Los datos (plantillas, logos, configuración) se guardan en la carpeta "data"
+que se crea al lado del programa. Para llevarlo a otra PC, copiá la carpeta
+completa.
+
+Manual completo y nuevas versiones:
+https://samuelsuarezok.github.io/PANEL-DE-CONTROL-RECESOS-/

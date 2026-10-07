@@ -1,0 +1,25 @@
+{
+  "mode": "duration",
+  "targetTime": null,
+  "durationMs": 900000,
+  "startedAt": null,
+  "pausedAt": null,
+  "pausedElapsedMs": 0,
+  "adjustMs": 0,
+  "textTop": "Volvemos en",
+  "textBottom": "Próxima sesión",
+  "messageAtZero": "Estamos por comenzar",
+  "logo": null,
+  "background": {
+    "type": "color",
+    "value": "#0a0a0f"
+  },
+  "backgroundAnimation": "none",
+  "announcements": [],
+  "announcementInterval": 15,
+  "alertThresholds": {
+    "yellow": 300000,
+    "red": 60000
+  },
+  "activeTemplate": null
+}

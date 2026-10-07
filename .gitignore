@@ -1,0 +1,19 @@
+# Dependencias
+node_modules/
+
+# Ejecutables compilados (se publican en GitHub Releases, no en el repositorio)
+dist/
+release/
+*.zip
+
+# Datos de uso local (estado, configuración, logos subidos)
+data/
+
+# Generado por build-embed.ts en cada compilación
+src/frontend/embed.ts
+
+# Sistema
+.DS_Store
+Thumbs.db
+*.log
+*.tmp

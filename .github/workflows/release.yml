@@ -55,7 +55,7 @@ jobs:
         run: |
           awk -v tag="## ${GITHUB_REF_NAME}" 'index($0, tag) == 1 { found = 1; next } found && /^## / { exit } found { print }' CHANGELOG.md > release/notas.md
           if [ ! -s release/notas.md ]; then echo "Receso ${GITHUB_REF_NAME}" > release/notas.md; fi
-          printf '\n---\n**Descargas y manual:** https://samuelsuarezok.github.io/PANEL-DE-CONTROL-RECESOS-/\n' >> release/notas.md
+          printf '\n---\n**Cómo descargar:** en *Assets* bajá el ZIP de tu sistema (Windows, Mac Apple Silicon o Mac Intel). Los archivos «Source code» son el código fuente.\n\n**Manual:** https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-#readme\n' >> release/notas.md
           cat release/notas.md
 
       - name: Publicar en Releases

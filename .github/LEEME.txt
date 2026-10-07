@@ -25,5 +25,5 @@ Los datos (plantillas, logos, configuración) se guardan en la carpeta "data"
 que se crea al lado del programa. Para llevarlo a otra PC, copiá la carpeta
 completa.
 
-Manual completo y nuevas versiones:
-https://samuelsuarezok.github.io/PANEL-DE-CONTROL-RECESOS-/
+Manual completo:  https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-#readme
+Nuevas versiones: https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases/latest

@@ -1,5 +1,9 @@
 # Cambios
 
+## v1.1.1 — 2026-10-07
+
+- Las descargas quedan solo en GitHub Releases: se quitó la página de GitHub Pages y los enlaces del README y del LEEME apuntan a Releases.
+
 ## v1.1.0 — 2026-10-07
 
 Primera versión publicada. Revisión completa de la app.

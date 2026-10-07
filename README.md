@@ -4,15 +4,20 @@ Aplicación portable para proyectar una cuenta regresiva durante recesos y antes
 
 Se integra con **ProPresenter 7**, **Resolume Arena/Avenue** y **FreeShow**, y también puede salir por **OBS → NDI / Spout** con fondo transparente.
 
-**⬇️ Descargar (Windows y Mac): https://samuelsuarezok.github.io/PANEL-DE-CONTROL-RECESOS-/**
+**⬇️ Descargar: [última versión en GitHub Releases](https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases/latest)** → en *Assets* bajá el ZIP de tu sistema:
+- `Receso-Windows.zip` — Windows 10/11
+- `Receso-Mac-AppleSilicon.zip` — Mac con chip Apple (M1, M2, M3, M4)
+- `Receso-Mac-Intel.zip` — Mac con procesador Intel
 
-![Proyección de Receso](docs/img/proyeccion.jpg)
+¿Qué Mac tengo? Menú Apple → *Acerca de esta Mac*: «Chip Apple M…» o «Procesador Intel». Los archivos «Source code» son el código fuente: no hacen falta para usar la app.
+
+![Proyección de Receso](.github/proyeccion.jpg)
 
 ---
 
 ## 🚀 Inicio rápido (3 pasos)
 
-1. Descargá el ZIP de tu sistema desde la [página de descarga](https://samuelsuarezok.github.io/PANEL-DE-CONTROL-RECESOS-/), descomprimilo y abrí con **doble clic** `receso.exe` (Windows) o `receso-mac-arm64` / `receso-mac-x64` (macOS). La primera vez Windows o macOS pueden pedir confirmación (ver *Solución de problemas*).
+1. Descargá el ZIP de tu sistema desde [Releases](https://github.com/samuelsuarezok/PANEL-DE-CONTROL-RECESOS-/releases/latest), descomprimilo y abrí con **doble clic** `receso.exe` (Windows) o `receso-mac-arm64` / `receso-mac-x64` (macOS). La primera vez Windows o macOS pueden pedir confirmación (ver *Solución de problemas*).
 2. La consola muestra las direcciones y un **código QR**. Escanealo con el celular: abre directo el **Panel de control**.
 3. En la PC del proyector abrí la dirección, tocá **Proyección** y poné pantalla completa (**tecla F**, doble clic o F11).
 
@@ -223,7 +228,7 @@ En Companion: módulo **Generic HTTP** → *POST* a `http://IP:3004/api/control`
 
 ## 💾 Portable: llevalo en un pendrive
 
-Cada ZIP de la página de descarga trae una carpeta `Receso` con el programa:
+Cada ZIP de Releases trae una carpeta `Receso` con el programa:
 ```
 Receso/
 ├── receso.exe          (o receso-mac-arm64 / receso-mac-x64)
@@ -289,9 +294,7 @@ bun run build        # ejecutables para Windows y macOS en dist/ (en Mac los fir
    git tag v1.2.0
    git push origin main v1.2.0
    ```
-3. GitHub Actions compila en macOS los tres ejecutables, los firma, arma los ZIP y crea el *Release*. La página de descarga apunta siempre a la última versión.
-
-La página de descarga está en `docs/` (GitHub Pages: *Settings → Pages → Deploy from a branch → main / docs*).
+3. GitHub Actions compila en macOS los tres ejecutables, los firma, arma los ZIP y crea el *Release*. El link `releases/latest` siempre lleva a la última versión.
 
 Variable opcional: `RECESO_DATA_DIR=/ruta/a/datos` para usar otra carpeta de datos.
 

@@ -1,6 +1,6 @@
 {
   "name": "receso",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Pantalla de cuenta regresiva para recesos y entradas - Conferencia (ProPresenter, Resolume, FreeShow, OBS)",
   "main": "src/index.ts",
   "type": "module",
